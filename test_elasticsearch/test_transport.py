@@ -115,6 +115,67 @@ class TestTransport(TestCase):
             t.get_connection().calls[0][1],
         )
 
+    def test_opaque_id_extracted_from_params(self):
+        t = Transport([{}], connection_class=DummyConnection)
+
+        t.perform_request("GET", "/", params={"key": "value", "opaque_id": "request-1"})
+        con = t.get_connection()
+        self.assertEquals(1, len(con.calls))
+        self.assertEquals(("GET", "/", {"key": "value"}, None), con.calls[0][0])
+        self.assertEquals(
+            {
+                "timeout": None,
+                "ignore": (),
+                "headers": {"x-opaque-id": "request-1"}
+            },
+            t.get_connection().calls[0][1],
+        )
+
+    def test_opaque_id_override(self):
+        t = Transport([{}], opaque_id="app-1", connection_class=DummyConnection)
+
+        # See that the Transport-level setting of opaque_id works.
+        t.perform_request("GET", "/", params={"key": "value"})
+        con = t.get_connection()
+        self.assertEquals(1, len(con.calls))
+        self.assertEquals(("GET", "/", {"key": "value"}, None), con.calls[0][0])
+        self.assertEquals(
+            {
+                "timeout": None,
+                "ignore": (),
+                "headers": {"x-opaque-id": "app-1"}
+            },
+            t.get_connection().calls[0][1],
+        )
+
+        # Now we try overriding at the request level.
+        t.perform_request("GET", "/", params={"key": "value", "opaque_id": "request-1"})
+        con = t.get_connection()
+        self.assertEquals(2, len(con.calls))
+        self.assertEquals(("GET", "/", {"key": "value"}, None), con.calls[1][0])
+        self.assertEquals(
+            {
+                "timeout": None,
+                "ignore": (),
+                "headers": {"x-opaque-id": "request-1"}
+            },
+            t.get_connection().calls[1][1],
+        )
+
+        # Make sure that the header is merged properly.
+        t.perform_request("GET", "/", headers={"header": "header-val"}, params={"key": "value", "opaque_id": "request-1"})
+        con = t.get_connection()
+        self.assertEquals(3, len(con.calls))
+        self.assertEquals(("GET", "/", {"key": "value"}, None), con.calls[2][0])
+        self.assertEquals(
+            {
+                "timeout": None,
+                "ignore": (),
+                "headers": {"header": "header-val", "x-opaque-id": "request-1"}
+            },
+            t.get_connection().calls[2][1],
+        )
+
     def test_request_with_custom_user_agent_header(self):
         t = Transport([{}], connection_class=DummyConnection)
 

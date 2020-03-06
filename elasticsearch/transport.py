@@ -352,7 +352,8 @@ class Transport(object):
                 ignore = (ignore,)
 
         if opaque_id:
-            headers.setdefault("x-opaque-id", opaque_id)
+            headers = headers or {}
+            headers["x-opaque-id"] = opaque_id
 
         for attempt in range(self.max_retries + 1):
             connection = self.get_connection()
