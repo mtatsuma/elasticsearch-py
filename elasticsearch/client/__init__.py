@@ -1370,7 +1370,7 @@ class Elasticsearch(object):
         )
 
     @query_params("rest_total_hits_as_int", "scroll")
-    def scroll(self, body=None, scroll_id=None, params=None):
+    def scroll(self, body=None, scroll_id=None, search_method="GET", params=None):
         """
         Allows to retrieve a large numbers of results from a single search request.
         `<https://www.elastic.co/guide/en/elasticsearch/reference/master/search-request-body.html#request-body-search-scroll>`_
@@ -1378,6 +1378,7 @@ class Elasticsearch(object):
         :arg body: The scroll ID if not passed by URL or query
             parameter.
         :arg scroll_id: The scroll ID
+        :arg search_method: HTTP method to call search API (GET or POST)
         :arg rest_total_hits_as_int: Indicates whether hits.total should
             be rendered as an integer or an object in the rest search response
         :arg scroll: Specify how long a consistent view of the index
@@ -1392,7 +1393,7 @@ class Elasticsearch(object):
             params["scroll_id"] = scroll_id
 
         return self.transport.perform_request(
-            "GET", "/_search/scroll", params=params, body=body
+            search_method, "/_search/scroll", params=params, body=body
         )
 
     @query_params(
@@ -1439,7 +1440,7 @@ class Elasticsearch(object):
         "typed_keys",
         "version",
     )
-    def search(self, body=None, index=None, doc_type=None, params=None):
+    def search(self, body=None, index=None, doc_type=None, search_method="GET", params=None):
         """
         Returns results matching a query.
         `<https://www.elastic.co/guide/en/elasticsearch/reference/master/search-search.html>`_
@@ -1449,6 +1450,7 @@ class Elasticsearch(object):
             `_all` or empty string to perform the operation on all indices
         :arg doc_type: A comma-separated list of document types to
             search; leave empty to perform the operation on all types
+        :arg search_method: HTTP method to call search API (GET or POST)
         :arg _source: True or false to return the _source field or not,
             or a list of fields to return
         :arg _source_excludes: A list of fields to exclude from the
@@ -1545,7 +1547,7 @@ class Elasticsearch(object):
             params["from"] = params.pop("from_")
 
         return self.transport.perform_request(
-            "GET", _make_path(index, doc_type, "_search"), params=params, body=body
+            search_method, _make_path(index, doc_type, "_search"), params=params, body=body
         )
 
     @query_params(

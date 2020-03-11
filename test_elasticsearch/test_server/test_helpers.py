@@ -359,6 +359,27 @@ class TestScan(ElasticsearchTestCase):
         self.assertEquals(set(map(str, range(100))), set(d["_id"] for d in docs))
         self.assertEquals(set(range(100)), set(d["_source"]["answer"] for d in docs))
 
+    def test_scroll_with_post_method(self):
+        bulk = []
+        for x in range(100):
+            bulk.append({"index": {"_index": "test_index", "_type": "_doc", "_id": x}})
+            bulk.append({"answer": x, "correct": x == 42})
+        self.client.bulk(bulk, refresh=True)
+
+        docs = list(
+            helpers.scan(
+                self.client,
+                index="test_index",
+                size=2,
+                scroll_kwargs={"search_method": "POST"},
+                search_method="POST"
+            )
+        )
+
+        self.assertEquals(100, len(docs))
+        self.assertEquals(set(map(str, range(100))), set(d["_id"] for d in docs))
+        self.assertEquals(set(range(100)), set(d["_source"]["answer"] for d in docs))
+
     def test_scroll_error(self):
         bulk = []
         for x in range(4):
